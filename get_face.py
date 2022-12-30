@@ -5,7 +5,7 @@ import tkinter
 from tkinter import font as tkFont
 
 
-import cv2.cv2
+import cv2
 import  dlib
 
 
@@ -28,7 +28,7 @@ class Get_Face:
 
         # 人脸识别的GUI
         self.gui = tkinter.Tk()
-        self.gui.title("人脸识别")
+        self.gui.title("人脸识别 11")
         self.gui.geometry("1400x600")
 
         # 左边的gui部分
