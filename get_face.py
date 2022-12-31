@@ -146,7 +146,7 @@ class Get_Face:
                  font=self.font_step_title,
                  text="2、输入你的名字").grid(row=7, column=0, columnspan=2, sticky=tkinter.W, padx=5, pady=20)
 
-        tkinter.Label(self.right_camera_frame, text="姓名: ").grid(row=8, column=0, sticky=tkinter.W, padx=5, pady=0)
+        tkinter.Label(self.right_camera_frame, text="姓名: ").grid(row=8, column=0, columnspan=3, sticky=tkinter.W, padx=5, pady=10)
         self.input_name.grid(row=8, column=1, sticky=tkinter.W, padx=0, pady=2)
 
         tkinter.Button(self.right_camera_frame,
@@ -163,7 +163,7 @@ class Get_Face:
                   command=self.save_face).grid(row=11, column=0, columnspan=3, sticky=tkinter.W)
 
         # Show log in GUI
-        self.log_all.grid(row=12, column=0, columnspan=20, sticky=tkinter.W, padx=5, pady=20)
+        self.log_all.grid(row=12, column=0, columnspan=15, sticky=tkinter.W, padx=5, pady=20)
 
         self.right_camera_frame.pack()
 
