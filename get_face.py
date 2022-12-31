@@ -29,7 +29,7 @@ class Get_Face:
         # 人脸识别的GUI
         self.gui = tkinter.Tk()
         self.gui.title("人脸识别")
-        self.gui.geometry("1400x60000")
+        self.gui.geometry("1400x600000")
 
         # 左边的gui部分
         self.left_camera_frame = tkinter.Frame(self.gui)
@@ -60,7 +60,7 @@ class Get_Face:
         # 存放文件的路径
         self.path_file_from_camera = "data/data_from_camera/"
         self.current_face_dir = ""
-        self.font = cv2.cv2.FONT_ITALIC
+        self.font = cv2.FONT_ITALIC
 
         # 脸部位置判断和感兴趣区域
         self.current_frame = np.ndarray
