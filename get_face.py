@@ -29,7 +29,7 @@ class Get_Face:
         # 人脸识别的GUI
         self.gui = tkinter.Tk()
         self.gui.title("人脸识别")
-        self.gui.geometry("1400x6000000")
+        self.gui.geometry("1400x60000")
 
         # 左边的gui部分
         self.left_camera_frame = tkinter.Frame(self.gui)
