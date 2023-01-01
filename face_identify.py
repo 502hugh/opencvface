@@ -61,4 +61,4 @@ class Face_Recognizer:
         # 控制再识别的后续帧数 / Reclassify after 'reclassify_interval' frames
         # 如果识别出 "unknown" 的脸, 将在 reclassify_interval_cnt 计数到 reclassify_interval 后, 对于人脸进行重新识别
         self.reclassify_interval_cnt = 0
-        self.reclassify_interval = 10
+        self.reclassify_interval = 10 
