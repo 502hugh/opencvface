@@ -5,7 +5,7 @@ import csv
 import numpy as np
 import logging
 import cv2
-
+import  cv2.cv2
 # 要读取人脸图像文件的路径
 path_images_from_camera = "data/data_from_camera/"
 
@@ -23,7 +23,7 @@ face_reco_model = dlib.face_recognition_model_v1("data/data_dlib/dlib_face_recog
 # 输入:   照片路径
 # 输出:   128D特征
 def return_128d_features(path_img):
-    img_rd = cv2.imread(path_img)
+    img_rd = cv2.cv2.imread(path_img)
     faces = detector(img_rd, 1)
 
     logging.info("%-40s %-20s", "检测到人脸的图像:", path_img)
@@ -79,10 +79,16 @@ def main():
             logging.info("%sperson_%s", path_images_from_camera, person)
             features_mean_person = return_features_mean_person(path_images_from_camera + person)
 
-            # 获取用户名
-            person_name = person.split('_', 2)[-1]
-            features_mean_person = np.insert(features_mean_person, 0, person_name, axis=0)
-            # 数据会是129D 用户名加人脸数据
+            # 获取用户信息
+            person_message = person.split('_', 2,)[-1]
+
+            # person_name = person_message.split('_',1)[0]
+            # person_num = person_message.split('_',1)[-1]
+            # print(person_num)
+            # print("名字：")
+            # print(person_name)
+            features_mean_person = np.insert(features_mean_person, 0, person_message,   axis=0)
+            # 数据会是129D 用户信息,人脸128D数据
             writer.writerow(features_mean_person)
             logging.info('\n')
         logging.info("所有录入人脸数据存入: data/features_all.csv")

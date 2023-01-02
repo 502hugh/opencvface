@@ -51,7 +51,9 @@ class Get_Face:
         # 个人姓名输入
         self.input_name  = tkinter.Entry(self.right_camera_frame)
         self.input_name_char = ""
-
+        # 个人工号输入
+        self.input_num  = tkinter.Entry(self.right_camera_frame)
+        self.input_num_char = ""
         # 警告和提示
         self.label_warning = tkinter.Label(self.right_camera_frame)
         self.label_face_cnt = tkinter.Label(self.right_camera_frame, text="脸的位置适合录入数据：")
@@ -110,11 +112,17 @@ class Get_Face:
         self.log_all['text'] = "人脸照片与数据分析文件已删除"
 
     # ui界面获取人物名称
-    def gui_get_name(self):
+    def gui_get_message(self):
         self.input_name_char = self.input_name.get()
-        self.create_face_folder()
-        self.label_cnt_face_file['text'] = str(self.personface_file_num_cnt)
-        self.label_user_file_num['text'] = "用户" + self.input_name_char + "已创文件夹的数目:"
+        self.input_num_char = self.input_num.get()
+        if len(self.input_name_char) == 0 or len(self.input_num_char) == 0:
+            self.log_all['text'] = "请确保个人信息已经输入！"
+        else:
+            self.create_face_folder()
+            self.label_cnt_face_file['text'] = str(self.personface_file_num_cnt)
+            self.label_user_file_num['text'] = "用户" + self.input_name_char + "已创文件夹的数目:"
+
+
 
     # gui布局
     def gui_info(self):
@@ -144,26 +152,30 @@ class Get_Face:
         '''2、获取用户名字并创建文件夹'''
         tkinter.Label(self.right_camera_frame,
                  font=self.font_step_title,
-                 text="2、输入你的名字").grid(row=7, column=0, columnspan=2, sticky=tkinter.W, padx=5, pady=20)
+                 text="2、输入你的个人信息").grid(row=7, column=0, columnspan=2, sticky=tkinter.W, padx=5, pady=20)
 
         tkinter.Label(self.right_camera_frame, text="姓名: ").grid(row=8, column=0, columnspan=3, sticky=tkinter.W, padx=5, pady=10)
         self.input_name.grid(row=8, column=1, sticky=tkinter.W, padx=0, pady=2)
 
+        tkinter.Label(self.right_camera_frame, text="工号: ").grid(row=9, column=0, columnspan=3, sticky=tkinter.W,padx=5, pady=10)
+        self.input_num.grid(row=9, column=1, sticky=tkinter.W, padx=0, pady=2)
+
+
         tkinter.Button(self.right_camera_frame,
                   text='确定输入',
-                  command=self.gui_get_name).grid(row=9, column=1, columnspan=3, sticky=tkinter.W)
+                  command=self.gui_get_message).grid(row=10, column=1, columnspan=3, sticky=tkinter.W)
 
         '''3、保存人脸当前帧到文件夹'''
         tkinter.Label(self.right_camera_frame,
                  font=self.font_step_title,
-                 text="3、保存人脸照片").grid(row=10, column=0, columnspan=2, sticky=tkinter.W, padx=5, pady=20)
+                 text="3、保存人脸照片").grid(row=11, column=0, columnspan=2, sticky=tkinter.W, padx=5, pady=20)
 
         tkinter.Button(self.right_camera_frame,
                   text='确定保存',
-                  command=self.save_face).grid(row=11, column=0, columnspan=3, sticky=tkinter.W)
+                  command=self.save_face).grid(row=12, column=0, columnspan=3, sticky=tkinter.W)
 
         # Show log in GUI
-        self.log_all.grid(row=12, column=0, columnspan=15, sticky=tkinter.W, padx=5, pady=20)
+        self.log_all.grid(row=13, column=0, columnspan=15, sticky=tkinter.W, padx=5, pady=20)
 
         self.right_camera_frame.pack()
 
@@ -200,13 +212,17 @@ class Get_Face:
             self.current_face_new_dir = "person_" \
                                         + str(self.personface_file_num_cnt) \
                                         + "_" \
-                                        + self.input_name_char
+                                        + self.input_name_char\
+                                        + "_" \
+                                        + self.input_num_char
         # 没有就默认 unknow
         else:
             self.current_face_new_dir = "person_" \
                                         + str(self.personface_file_num_cnt)\
                                         + "_" \
-                                        + "unknow"
+                                        + "unknowname"\
+                                        + "_" \
+                                        + "unknownum"
 
         self.current_face_dir = self.path_file_from_camera + self.current_face_new_dir
         # 创建文件夹
@@ -245,14 +261,14 @@ class Get_Face:
                     self.face_ROI_image = cv2.cvtColor(self.face_ROI_image, cv2.cv2.COLOR_BGR2RGB)
 
                     cv2.cv2.imwrite(self.current_face_dir + "/img_face_" + str(self.personface_photo_num_cnt) + ".jpg", self.face_ROI_image)
-                    logging.info("%-40s %s/img_face_%s.jpg", "写入本地 / Save into：",
+                    logging.info("%-40s %s/img_face_%s.jpg", "写入本地 ：",
                                  str(self.current_face_dir), str(self.personface_photo_num_cnt) + ".jpg")
                 else:
                     self.log_all["text"] = "人脸超出摄像头检测范围!"
             else:
                 self.log_all["text"] = "当前未能检测到人脸!"
         else:
-            self.log_all["text"] = "请确保输入你的名字!"
+            self.log_all["text"] = "请确保输入你的信息!"
 
 
 
