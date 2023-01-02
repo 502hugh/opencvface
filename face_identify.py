@@ -84,3 +84,5 @@ class Face_Recognizer:
             logging.warning("Please run 'get_faces_from_camera.py' "
                             "and 'features_extraction_to_csv.py' before 'face_reco_from_camera.py'")
             return 0
+
+           
