@@ -68,6 +68,7 @@ class Get_Face:
         self.label_user_file_num = tkinter.Label(self.right_camera_frame, text="用户已创文件夹的数目:")
         self.label_user_filepthoto_num =tkinter.Label(self.right_camera_frame, text="文件夹已存的人脸数目:")
 
+
         '''存放文件的路径'''
         self.path_file_from_camera = "data/data_from_camera/"
         self.current_face_dir = ""
@@ -320,12 +321,13 @@ class Get_Face:
             self.current_frame_face = len(faces)
 
             # 转换图片类型
+            global  img_PhotoImage
             img_Image = Image.fromarray(self.current_frame)
             img_PhotoImage = ImageTk.PhotoImage(image=img_Image)
             self.label.img_tk = img_PhotoImage
             self.label.configure(image=img_PhotoImage)
 
-            # Refresh frame
+            # 刷新当前帧
         self.gui.after(20, self.process)
 
 
