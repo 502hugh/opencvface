@@ -263,7 +263,7 @@ class Get_Face:
 
                     cv2.cv2.imwrite(self.current_face_dir + "/img_face_" + str(self.personface_photo_num_cnt) + ".jpg", self.face_ROI_image)
                     logging.info("%-40s %s/img_face_%s.jpg", "写入本地 ：",
-                                 str(self.current_face_dir), str(self.personface_photo_num_cnt) + ".jpg")
+                                 str(self.current_face_dir), str(self.personface_photo_num_cnt))
                 else:
                     self.log_all["text"] = "人脸超出摄像头检测范围!"
             else:

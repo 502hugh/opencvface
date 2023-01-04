@@ -37,6 +37,7 @@ class Face_Recognizer:
         # 不正确识别的次数
         self.flase_times =0
 
+
         # FPS
         self.frame_time = 0
         self.frame_start_time = 0
@@ -49,16 +50,16 @@ class Face_Recognizer:
 
         # 用来存放所有录入人脸特征的数组
         self.face_features_known_list = []
-        # 存储录入人脸名字
-        self.face_name_known_list = []
+        # 存储录入人脸信息
+        self.face_message_known_list = []
 
         # 用来存储上一帧和当前帧 ROI 的质心坐标
         self.last_frame_face_centroid_list = []
         self.current_frame_face_centroid_list = []
 
         # 用来存储上一帧和当前帧检测出目标的名字
-        self.last_frame_face_name_list = []
-        self.current_frame_face_name_list = []
+        self.last_frame_face_message_list = []
+        self.current_frame_face_message_list = []
 
         # 上一帧和当前帧中人脸数的计数器
         self.last_frame_face_cnt = 0
@@ -86,7 +87,7 @@ class Face_Recognizer:
         '''人脸识别gui'''
         self.gui = tkinter.Tk()
         self.gui.title("人脸识别")
-        self.gui.geometry("1400x900")
+        self.gui.geometry("1400x600")
 
         # 格式设置
         self.font_title = tkFont.Font(family='Helvetica', size=20, weight='bold')
@@ -101,37 +102,65 @@ class Face_Recognizer:
 
 
 
-        '''右边的gui部分'''
-        self.right_camera_frame = tkinter.Frame(self.gui)
-        self.log_first = tkinter.Label(self.right_camera_frame, fg='blue')
+        '''右上边的gui部分'''
+        self.right_up_camera_frame = tkinter.Frame(self.gui)
+        self.log_first = tkinter.Label(self.right_up_camera_frame, fg='blue')
         self.log_first['text'] = '正在识别，请稍后...'
+        self.fps_frame = tkinter.Label(self.right_up_camera_frame, fg="blue")
+        self.fps_frame['text'] ='0'
+        self.true_identify = tkinter.Label(self.right_up_camera_frame, fg='blue')
+        self.true_identify['text']='0%'
 
-        self.right_camera_frame.pack()
+        self.right_up_camera_frame.pack()
 
+
+
+        self.photo_path = "data/unknown.png"
+        self.label_photo = tkinter.Label(self.gui)
+        self.user_photo = np.ndarray
+
+
+        '''右下边的gui部分'''
+        self.right_down_camera_frame =tkinter.Frame(self.gui)
+        self.user_name =tkinter.Label(self.right_down_camera_frame,text='')
+        self.user_num =tkinter.Label(self.right_down_camera_frame,text='')
+        self.right_down_camera_frame.pack()
 
 
         self.cap = cv2.cv2.VideoCapture(0)
 
+
     def gui_info(self):
-        tkinter.Label(self.right_camera_frame,
+        tkinter.Label(self.right_up_camera_frame,
                       text="人脸识别扫描",
                       font=self.font_title).grid(row=0, column=0, columnspan=3, sticky=tkinter.W, padx=5, pady=30)
 
         self.log_first.grid(row=1, column=0, columnspan=15, sticky=tkinter.W, padx=5, pady=10)
 
+        tkinter.Label(self.right_up_camera_frame,
+                      text="单次识别的fps: ").grid(row=2, column=0, columnspan=2, sticky=tkinter.W, padx=5, pady=10)
+        self.fps_frame.grid(row=2, column=2, columnspan=3, sticky=tkinter.W, padx=5, pady=10)
+
+        tkinter.Label(self.right_up_camera_frame,
+                      text="识别的准确度: ").grid(row=3, column=0, columnspan=2, sticky=tkinter.W, padx=5, pady=10)
+        self.true_identify.grid(row=3, column=2, columnspan=3, sticky=tkinter.W, padx=5, pady=10)
+
         '''图片设置'''
-        # img_gif = tkinter.PhotoImage()
-        # label_img = tkinter.Label(self.gui, image=img_gif)
-        # label_img.pack()
+        img = Image.open(self.photo_path)
 
-        tkinter.Label(self.right_camera_frame,
-                       text = self.current_frame_face_name_list).grid(row=2, column=0, columnspan=3, sticky=tkinter.W, padx=2, pady=10)
+        img = img.resize((200, 200))
+        img_Photoimage = ImageTk.PhotoImage(image = img)
+        self.label_photo.img_tk = img_Photoimage
+        self.label_photo.configure(image=img_Photoimage)
+        self.label_photo.pack()
 
+        tkinter.Label(self.right_down_camera_frame,
+                      text="姓名: ").grid(row=0, column=0, columnspan=2, sticky=tkinter.W, padx=5, pady=10)
+        self.user_name.grid(row=0, column=2, columnspan=3, sticky=tkinter.W, padx=5, pady=10)
 
-        tkinter.Label(self.right_camera_frame,
-                       text = self.current_frame_face_name_list).grid(row=2, column=0, columnspan=3, sticky=tkinter.W, padx=2, pady=10)
-
-
+        tkinter.Label(self.right_down_camera_frame,
+                      text="工号: ").grid(row=1, column=0, columnspan=2, sticky=tkinter.W,padx=5, pady=10)
+        self.user_num.grid(row=1, column=2, columnspan=3, sticky=tkinter.W, padx=5, pady=10)
 
     # 从 "features_all.csv" 读取录入人脸特征
     def get_face_database(self):
@@ -140,7 +169,8 @@ class Face_Recognizer:
             csv_rd = pd.read_csv(path_features_known_csv, header=None)
             for i in range(csv_rd.shape[0]):
                 features_someone_arr = []
-                self.face_name_known_list.append(csv_rd.iloc[i][0])
+                # 存储人物信息
+                self.face_message_known_list.append(csv_rd.iloc[i][0])
                 for j in range(1, 129):
                     if csv_rd.iloc[i][j] == '':
                         features_someone_arr.append('0')
@@ -163,6 +193,7 @@ class Face_Recognizer:
         self.start_time = now
         self.frame_time = now - self.frame_start_time
         self.fps = 1.0 / self.frame_time
+        self.fps_frame['text'] = str(self.fps.__round__(2))
         self.frame_start_time = now
 
     @staticmethod
@@ -177,7 +208,7 @@ class Face_Recognizer:
     def centroid_tracker(self):
         for i in range(len(self.current_frame_face_centroid_list)):
             e_distance_current_frame_person_x_list = []
-            # 对于当前帧中的人脸1, 和上一帧中的 人脸1/2/3/4/.. 进行欧氏距离计算 / For object 1 in current_frame, compute e-distance with object 1/2/3/4/... in last frame
+            # 对于当前帧中的人脸1, 和上一帧中的 人脸1/2/3/4/.. 进行欧氏距离计算
             for j in range(len(self.last_frame_face_centroid_list)):
                 self.last_current_frame_centroid_e_distance = self.return_euclidean_distance(
                     self.current_frame_face_centroid_list[i], self.last_frame_face_centroid_list[j])
@@ -187,24 +218,19 @@ class Face_Recognizer:
 
             last_frame_num = e_distance_current_frame_person_x_list.index(
                 min(e_distance_current_frame_person_x_list))
-            self.current_frame_face_name_list[i] = self.last_frame_face_name_list[last_frame_num]
+            self.current_frame_face_message_list[i] = self.last_frame_face_message_list[last_frame_num]
 
-    # 生成的 cv2 window 上面添加说明文字 / putText on cv2 window
+    # 添加说明文字
     def draw_note(self, img_rd):
-        # 添加说明
-        cv2.cv2.putText(img_rd, "Frame:  " + str(self.frame_cnt), (20, 100), self.font, 0.8, (0, 255, 0), 1,
-                    cv2.cv2.LINE_AA)
 
-        cv2.cv2.putText(img_rd, "Faces:  " + str(self.current_frame_face_cnt), (20, 160), self.font, 0.8, (0, 255, 0), 1,
-                    cv2.cv2.LINE_AA)
-
-        for i in range(len(self.current_frame_face_name_list)):
-            img_rd = cv2.cv2.putText(img_rd, "Face_" + str(i + 1), tuple(
-                [int(self.current_frame_face_centroid_list[i][0]), int(self.current_frame_face_centroid_list[i][1])]),
-                                 self.font,
-                                 0.8, (255, 190, 0),
-                                 1,
-                                 cv2.cv2.LINE_AA)
+        for i in range(len(self.current_frame_face_message_list)):
+            img_rd = cv2.cv2.putText(img_rd, "Face" + str(i + 1),
+                                     tuple([int(self.current_frame_face_centroid_list[i][0]),
+                                     int(self.current_frame_face_centroid_list[i][1])]),
+                                     self.font,
+                                     0.8, (255, 190, 0),
+                                     1,
+                                     cv2.cv2.LINE_AA)
 
     # 获取视频流的当前帧
     def get_frame(self):
@@ -233,7 +259,7 @@ class Face_Recognizer:
             self.current_frame_face_cnt = len(faces)
 
             # 4. 更新上一帧中的人脸列表
-            self.last_frame_face_name_list = self.current_frame_face_name_list[:]
+            self.last_frame_face_message_list = self.current_frame_face_message_list[:]
 
             # 5. 更新上一帧和当前帧的质心列表
             self.last_frame_face_centroid_list = self.current_frame_face_centroid_list
@@ -246,7 +272,7 @@ class Face_Recognizer:
 
                 self.current_frame_face_position_list = []
 
-                if "unknown" in self.current_frame_face_name_list:
+                if "unknown" in self.current_frame_face_message_list:
                     logging.debug("有未知人脸, 开始进行 reclassify_interval_cnt 计数")
                     self.reclassify_interval_cnt += 1
 
@@ -269,9 +295,9 @@ class Face_Recognizer:
 
                 for i in range(self.current_frame_face_cnt):
                     # 6.2 在感兴趣区域标注名字
-                    self.img_rd = cv2.cv2.putText(self.img_rd, self.current_frame_face_name_list[i],
-                                         self.current_frame_face_position_list[i], self.font, 0.8, (0, 255, 255), 1,
-                                         cv2.cv2.LINE_AA)
+                    self.img_rd = cv2.cv2.putText(self.img_rd, self.current_frame_face_message_list[i].split('_',1)[0],
+                                                  self.current_frame_face_position_list[i], self.font, 0.8, (0, 255, 255), 1,
+                                                  cv2.cv2.LINE_AA)
 
 
                 self.draw_note(self.img_rd)
@@ -288,18 +314,30 @@ class Face_Recognizer:
                 if self.current_frame_face_cnt == 0:
                     logging.debug("人脸消失, 当前帧中没有人脸 !!!")
                     self.log_first['text'] = '人脸消失, 当前帧中没有人脸 !!!'
+
+                    self.user_name['text']  = ''
+                    self.user_num['text']  = ''
+                    self.photo_path = "data/unknown.png"
+                    img = Image.open(self.photo_path)
+
+                    img = img.resize((200, 200))
+                    img_Photoimage = ImageTk.PhotoImage(image=img)
+                    self.label_photo.img_tk = img_Photoimage
+                    self.label_photo.configure(image=img_Photoimage)
+
+
                     # 清空列表中的人脸数据
-                    self.current_frame_face_name_list = []
+                    self.current_frame_face_message_list = []
                 # 6.2.2 人脸数增加  0->1, 0->2, ..., 1->2, ...
                 else:
                     logging.debug("scene 2.2 出现人脸, 进行人脸识别")
                     self.log_first['text'] = '出现人脸, 进行人脸识别!!!'
-                    self.current_frame_face_name_list = []
+                    self.current_frame_face_message_list = []
                     for i in range(len(faces)):
                         shape = predictor(self.img_rd, faces[i])
                         self.current_frame_face_feature_list.append(
                             face_reco_model.compute_face_descriptor(self.img_rd, shape))
-                        self.current_frame_face_name_list.append("unknown")
+                        self.current_frame_face_message_list.append("unknown")
 
                     # 6.2.2.1 遍历捕获到的图像中所有的人脸
                     for k in range(len(faces)):
@@ -332,18 +370,36 @@ class Face_Recognizer:
                             min(self.current_frame_face_X_e_distance_list))
 
                         if min(self.current_frame_face_X_e_distance_list) < 0.4:
-                            self.current_frame_face_name_list[k] = self.face_name_known_list[similar_person_num]
+                            self.current_frame_face_message_list[k] = self.face_message_known_list[similar_person_num]
                             #识别出来了
                             logging.info("人脸识别结果: %s",
-                                          self.face_name_known_list[similar_person_num].split('_',1)[0])
-                            self.log_first['text'] = '人脸识别结果:'+self.face_name_known_list[similar_person_num].split('_',1)[0]
-
+                                          self.face_message_known_list[similar_person_num].split('_',1)[0])
+                            self.log_first['text'] = '人脸识别结果:'+self.face_message_known_list[similar_person_num].split('_',1)[0]
+                            self.user_name['text']  = self.face_message_known_list[similar_person_num].split('_',1)[0]
+                            self.user_num['text']  = self.face_message_known_list[similar_person_num].split('_', 1)[-1]
+                            self.photo_path = "data/data_from_camera/person_1_"\
+                                              +self.face_message_known_list[similar_person_num]\
+                                              +"/img_face_1.jpg"
+                            img = Image.open(self.photo_path)
+                            img = img.resize((200, 200))
+                            img_Photoimage = ImageTk.PhotoImage(image=img)
+                            self.label_photo.img_tk = img_Photoimage
+                            self.label_photo.configure(image=img_Photoimage)
+                            self.true_times += 1
+                            if self.true_times != 0 or self.flase_times != 0:
+                                true_identify = self.true_times / (self.true_times + self.flase_times)
+                                true_identify = true_identify * 100
+                                self.true_identify['text'] =str(true_identify.__round__(2)) + "%"
 
                         else:
                             # 没有识别出来
                             logging.info("人脸识别结果: Unknown person")
                             self.log_first['text'] = '人脸识别结果:没有该人物'
-
+                            self.flase_times += 1
+                            if self.true_times != 0 or self.flase_times != 0:
+                                true_identify = self.true_times / (self.true_times + self.flase_times)
+                                true_identify = true_identify * 100
+                                self.true_identify['text'] = str(true_identify.__round__(2)) + "%"
                     # 7. 生成的窗口添加说明文字
                     self.draw_note(self.img_rd)
                     # cv2.imwrite("debug/debug_" + str(self.frame_cnt) + ".png", img_rd) # Dump current frame image if needed
@@ -365,7 +421,7 @@ class Face_Recognizer:
         self.process()
         self.gui.mainloop()
         self.cap.release()
-        cv2.destroyAllWindows()
+        cv2.cv2.destroyAllWindows()
 
 
 def main():
@@ -374,5 +430,8 @@ def main():
     Face_Recognizer_con.run()
 
 
+
+
+
 if __name__ == '__main__':
-    main()
+        main()
