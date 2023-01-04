@@ -190,10 +190,10 @@ class Face_Recognizer:
         # 每秒刷新 fps
         if str(self.start_time).split(".")[0] != str(now).split(".")[0]:
             self.fps_show = self.fps
+            self.fps_frame['text'] = str(self.fps.__round__(2))
         self.start_time = now
         self.frame_time = now - self.frame_start_time
         self.fps = 1.0 / self.frame_time
-        self.fps_frame['text'] = str(self.fps.__round__(2))
         self.frame_start_time = now
 
     @staticmethod
