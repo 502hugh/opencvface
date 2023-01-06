@@ -5,6 +5,7 @@
 # 人脸进行再识别需要花费大量时间, 这里用 OT 做跟踪
 import tkinter
 
+import matplotlib.pyplot as plt
 from PIL import ImageTk, Image
 from tkinter import font as tkFont
 import dlib
@@ -16,19 +17,21 @@ import pandas as pd
 import time
 import logging
 
-# Dlib 正向人脸检测器 / Use frontal face detector of Dlib
+# Dlib 正向人脸检测器
+from numpy import mean
+
 detector = dlib.get_frontal_face_detector()
 
-# Dlib 人脸 landmark 特征点检测器 / Get face landmarks
+# Dlib 人脸 landmark 特征点检测器
 predictor = dlib.shape_predictor('data/data_dlib/shape_predictor_68_face_landmarks.dat')
 
-# Dlib Resnet 人脸识别模型, 提取 128D 的特征矢量 / Use Dlib resnet50 model to get 128D face descriptor
+# Dlib Resnet 人脸识别模型, 提取 128D 的特征矢量
 face_reco_model = dlib.face_recognition_model_v1("data/data_dlib/dlib_face_recognition_resnet_model_v1.dat")
 
 
 class Face_Recognizer:
     def __init__(self):
-        self.font = cv2.FONT_ITALIC
+        self.font = cv2.cv2.FONT_ITALIC
 
         # 计数器
         self.get_csvdata = 0
@@ -42,7 +45,7 @@ class Face_Recognizer:
         self.frame_time = 0
         self.frame_start_time = 0
         self.fps = 0
-        self.fps_show = 0
+        self.fps_list = []
         self.start_time = time.time()
 
         # cnt for frame
@@ -76,7 +79,7 @@ class Face_Recognizer:
         # e distance between centroid of ROI in last and current frame
         self.last_current_frame_centroid_e_distance = 0
 
-        # 控制再识别的后续帧数 / Reclassify after 'reclassify_interval' frames
+        # 控制再识别的后续帧数
         # 如果识别出 "unknown" 的脸, 将在 reclassify_interval_cnt 计数到 reclassify_interval 后, 对于人脸进行重新识别
         self.reclassify_interval_cnt = 0
         self.reclassify_interval = 5
@@ -189,12 +192,37 @@ class Face_Recognizer:
         now = time.time()
         # 每秒刷新 fps
         if str(self.start_time).split(".")[0] != str(now).split(".")[0]:
-            self.fps_show = self.fps
             self.fps_frame['text'] = str(self.fps.__round__(2))
+            self.fps_list.append(float(str(self.fps.__round__(2))))
         self.start_time = now
         self.frame_time = now - self.frame_start_time
         self.fps = 1.0 / self.frame_time
         self.frame_start_time = now
+
+    def draw_fps(self):
+        plt.rcParams['font.sans-serif'] = ['SimHei']
+        plt.rcParams['axes.unicode_minus'] = False
+        self.fps_list.pop(0)
+        # 这个是原始数据画出来的图
+        plt.title('fps数据分布折线图')
+        plt.plot(self.fps_list, 'b*--', alpha=0.5, linewidth=1,)
+        plt.text(.64, 10, r'fps的平均值是：{:.2f}'.format(mean(self.fps_list)))
+        plt.xlabel('检测次数')
+        plt.ylabel('fps')
+        plt.yticks(np.arange(9,16,step=0.4))
+        plt.show()
+        plt.close()
+
+        # 这个是筛选过后的,推荐这个
+        plt.title('fps数据分布折线图')
+        fps_list_late = [ i for i in self.fps_list if i > 8]
+        plt.plot(fps_list_late, 'b*--', alpha=0.5, linewidth=1, )
+        plt.text(.64, 10, r'fps的平均值是：{:.2f}'.format(mean(fps_list_late)))
+        plt.xlabel('检测次数')
+        plt.ylabel('fps')
+        plt.yticks(np.arange(9, 16, step=0.4))
+        plt.show()
+        plt.close()
 
     @staticmethod
     # 计算两个128D向量间的欧式距离
@@ -268,7 +296,8 @@ class Face_Recognizer:
             # 6.1 如果当前帧和上一帧人脸数没有变化
             if (self.current_frame_face_cnt == self.last_frame_face_cnt) and (
                     self.reclassify_interval_cnt != self.reclassify_interval):
-                logging.debug("当前帧和上一帧相比没有发生人脸数变化 !!!")
+                logging.debug("当前帧和上一帧相比人脸没变化 !!!")
+
 
                 self.current_frame_face_position_list = []
 
@@ -289,7 +318,7 @@ class Face_Recognizer:
                                                tuple([d.right(), d.bottom()]),
                                                (255, 255, 255), 2)
 
-                # 如果当前帧中有多个人脸, 使用质心追踪 / Multi-faces in current frame, use centroid-tracker to track
+                # 如果当前帧中有多个人脸, 使用质心追踪
                 if self.current_frame_face_cnt != 1:
                     self.centroid_tracker()
 
@@ -298,8 +327,6 @@ class Face_Recognizer:
                     self.img_rd = cv2.cv2.putText(self.img_rd, self.current_frame_face_message_list[i].split('_',1)[0],
                                                   self.current_frame_face_position_list[i], self.font, 0.8, (0, 255, 255), 1,
                                                   cv2.cv2.LINE_AA)
-
-
                 self.draw_note(self.img_rd)
 
             # 6.2 如果当前帧和上一帧人脸数发生变化
@@ -313,7 +340,7 @@ class Face_Recognizer:
                 # 6.2.1 人脸数减少  1->0 2->1
                 if self.current_frame_face_cnt == 0:
                     logging.debug("人脸消失, 当前帧中没有人脸 !!!")
-                    self.log_first['text'] = '人脸消失, 当前帧中没有人脸 !!!'
+                    self.log_first['text'] = '请将人脸调整到合适的位置 !!!'
 
                     self.user_name['text']  = ''
                     self.user_num['text']  = ''
@@ -324,7 +351,6 @@ class Face_Recognizer:
                     img_Photoimage = ImageTk.PhotoImage(image=img)
                     self.label_photo.img_tk = img_Photoimage
                     self.label_photo.configure(image=img_Photoimage)
-
 
                     # 清空列表中的人脸数据
                     self.current_frame_face_message_list = []
@@ -369,9 +395,9 @@ class Face_Recognizer:
                         similar_person_num = self.current_frame_face_X_e_distance_list.index(
                             min(self.current_frame_face_X_e_distance_list))
 
+                        # 识别出来了
                         if min(self.current_frame_face_X_e_distance_list) < 0.4:
                             self.current_frame_face_message_list[k] = self.face_message_known_list[similar_person_num]
-                            #识别出来了
                             logging.info("人脸识别结果: %s",
                                           self.face_message_known_list[similar_person_num].split('_',1)[0])
                             self.log_first['text'] = '人脸识别结果:'+self.face_message_known_list[similar_person_num].split('_',1)[0]
@@ -387,22 +413,26 @@ class Face_Recognizer:
                             self.label_photo.configure(image=img_Photoimage)
                             self.true_times += 1
                             if self.true_times != 0 or self.flase_times != 0:
-                                true_identify = self.true_times / (self.true_times + self.flase_times)
-                                true_identify = true_identify * 100
-                                self.true_identify['text'] =str(true_identify.__round__(2)) + "%"
-
+                                if (self.true_times + self.flase_times) % 10 == 0:
+                                    true_identify = self.true_times / (self.true_times + self.flase_times)
+                                    true_identify = true_identify * 100
+                                    self.true_identify['text'] =str(true_identify.__round__(2)) + "%"
+                            self.reclassify_interval_cnt = 0
+                        # 没有识别出来
                         else:
-                            # 没有识别出来
+
                             logging.info("人脸识别结果: Unknown person")
-                            self.log_first['text'] = '人脸识别结果:没有该人物'
                             self.flase_times += 1
                             if self.true_times != 0 or self.flase_times != 0:
-                                true_identify = self.true_times / (self.true_times + self.flase_times)
-                                true_identify = true_identify * 100
-                                self.true_identify['text'] = str(true_identify.__round__(2)) + "%"
+                                if (self.true_times + self.flase_times) % 10 == 0:
+                                    true_identify = self.true_times / (self.true_times + self.flase_times)
+                                    true_identify = true_identify * 100
+                                    self.true_identify['text'] = str(true_identify.__round__(2)) + "%"
+                            if self.reclassify_interval_cnt > self.reclassify_interval:
+                                pass
+                            self.log_first['text'] = '人脸识别结果:没有该人物'
                     # 7. 生成的窗口添加说明文字
                     self.draw_note(self.img_rd)
-                    # cv2.imwrite("debug/debug_" + str(self.frame_cnt) + ".png", img_rd) # Dump current frame image if needed
 
 
             self.update_fps()
@@ -422,6 +452,7 @@ class Face_Recognizer:
         self.gui.mainloop()
         self.cap.release()
         cv2.cv2.destroyAllWindows()
+        self.draw_fps()
 
 
 def main():
